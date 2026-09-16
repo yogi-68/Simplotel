@@ -58,6 +58,62 @@ Scenario dates are written as `{{+30}}` — *30 days from today* — so the suit
 
 ---
 
+## Results — live model (`gpt-4o-mini`)
+
+`npm run eval -- --live` · 2026-09-16 · **16/16 passed** · ~1,3xx ms per scenario · two consecutive
+runs, identical results.
+
+**This run is the most valuable thing in this document**, because the first time it was executed it
+scored **12/16** — while the offline suite was 16/16 green. Everything the offline provider proved
+about the pipeline was true, and it still said nothing about whether a real model would behave.
+
+### What the live run caught
+
+**1. The booking form path was broken (S05, S14, S15).** `check_availability` was never called in
+the entire first live run. With dates written in the *message* the model called the tool correctly,
+but when the same dates arrived as structured `context` from the booking form, `gpt-4o-mini`
+ignored the stay details in its prompt and asked the guest to re-enter dates they had just typed
+into a date picker — on the single most important path in the product.
+
+The fix was architectural rather than a prompt tweak. If a request carries a complete stay, the
+guest filled a date picker and pressed a button labelled *Check availability*; there is no intent
+left to infer. The backend now runs the engine **before** the model and hands over the result to
+narrate. This is the project's own stated principle applied to a case I had originally got wrong —
+*the model decides what the guest means; code decides what is true* — and it makes that path
+independent of which model sits behind it.
+
+**2. A rejected stay was mislabelled (S07).** The model variously typed "your check-out is before
+your check-in" as `fallback` or `clarification` across runs. `fallback` renders in the UI as
+**Not in our records**, which is actively misleading: our records are fine, the guest's dates are
+not. The backend already knows a business rule failed, so it now sets that label itself and keeps
+the model's wording. The inline form is also pointed at the exact field the engine rejected.
+
+**3. One of my assertions was simply wrong (also S07).** It required the model to reproduce the
+engine's error string verbatim. The model's own phrasing — *"Please provide a valid check-out date
+after the 20th"* — is better, because it names the actual date. The assertion now checks the reply
+is about check-out and quotes no price, rather than demanding specific wording.
+
+Both product fixes are locked in by regression tests in `tests/integration/chat.test.ts`, which use
+a stub provider that deliberately *misbehaves* in the way the live model did.
+
+### Observed live behaviour
+
+A four-turn conversation against the real model:
+
+| Turn | Reply | Sources |
+|---|---|---|
+| "Is breakfast included?" | "Yes, buffet breakfast is included in every room rate. It is served at Tamarind from 7:00 AM to 10:30 AM daily." | `F22` |
+| "what about the cancellation policy?" | Gave the 48-hour rule **and** the peak-season 7-day rule | `F29`, `F30` |
+| Availability, 15–17 Dec, 3 adults | "…the Executive Twin…at a total of INR 21,004 for the two nights." | engine: `Executive Twin INR 21004` |
+| "What time does the casino open?" | "I do not have that information. Please check with the front desk at +91 80 4567 1200…" | none |
+
+Two things worth noting. On turn 2 the real model cited **two** facts where the offline provider
+cites one — it noticed the peak-season rule also applied, which is the kind of synthesis the model
+is actually there for. On turn 3 the figure in the prose matches the engine's number exactly,
+because the model is narrating a computed result rather than producing one.
+
+---
+
 ## Retrieval A/B: lexical vs. full context
 
 The retrieval design was argued for, so it should be measured rather than asserted. Both modes run
@@ -129,9 +185,10 @@ Regression tests: `tests/integration/chat.test.ts`.
 ## Full test suite
 
 ```
-npm test           166 passed   (135 server, 31 web)
-npm run test:e2e     7 passed   (real HTTP, real listening port)
-npm run eval        16 passed
+npm test                   169 passed   (138 server, 31 web)
+npm run test:e2e             7 passed   (real HTTP, real listening port)
+npm run eval                16 passed   (offline, deterministic)
+npm run eval -- --live      16 passed   (gpt-4o-mini)
 ```
 
 | Suite | Tests | Covers |
@@ -142,7 +199,7 @@ npm run eval        16 passed
 | `tests/unit/grounding` | 9 | Citation validation, including the not-retrieved-this-turn rule |
 | `tests/unit/conversation` | 14 | Slot precedence, session TTL, LRU eviction, turn trimming |
 | `tests/unit/resilience` | 9 | Timeout, retry policy, non-retryable errors, circuit breaker |
-| `tests/integration/chat` | 25 | Every conversational path incl. grounding violations and degradation |
+| `tests/integration/chat` | 28 | Every conversational path incl. grounding violations and degradation |
 | `tests/integration/api` | 17 | REST endpoints, error envelopes, rate limiting, header hygiene |
 | `tests/integration/scenarios` | 16 | The evaluation suite |
 | `apps/web/tests` | 31 | Reducer transitions, error taxonomy, all render states |
@@ -170,6 +227,13 @@ Three UI defects were found this way and fixed: bubbles stretching to 82% regard
 length; the thread not following text as the typewriter grew it (fixed with a `ResizeObserver` that
 sticks to the bottom only when the guest already is); and the composer being `disabled` while
 sending, which blurred it and silently dropped the next message.
+
+**What this pass did not cover.** Verification was on a desktop viewport only — the automation
+environment would not resize the browser window below desktop width, so the mobile layout is
+implemented mobile-first and reviewed in CSS but has **not** been confirmed on a real narrow
+viewport. Absence of horizontal overflow was asserted programmatically at desktop width
+(`scrollWidth === clientWidth`). Confirming mobile on a device, and adding Playwright to automate
+both widths, is on the pre-production list in [PRODUCT_NOTES.md](./PRODUCT_NOTES.md).
 
 ---
 

@@ -341,10 +341,17 @@ Roughly in the order I would do them.
 
 Being honest about the weak points, since the brief asks for judgement rather than perfection:
 
-- **The offline mock provider is convincing enough to be a trap.** It makes the test suite fast and
-  keyless, which is genuinely valuable — but every scenario passing against it says nothing about
-  whether a real model obeys the prompt. The eval harness runs `--live` for exactly this reason,
-  and the mock numbers should never be quoted as if they were model quality.
+- **The offline mock provider is convincing enough to be a trap** — and this is not a theoretical
+  worry, it happened. The offline suite was 16/16 green while the first live run scored 12/16 and
+  exposed two real product bugs, including the booking form failing to check availability at all.
+  The mock proves the pipeline works; it says nothing about whether a model obeys the prompt. Its
+  numbers should never be quoted as model quality, and `--live` belongs in CI before this ships.
+- **I originally put a deterministic decision inside the model.** When the booking form supplies a
+  complete stay, whether to check availability is not a judgement call — and leaving it to
+  `gpt-4o-mini` meant guests were asked to re-type dates they had just entered in a date picker. I
+  had written the AI/deterministic rule down and then broken it in the most important flow in the
+  product. Worth stating plainly, because the rule is only useful if it is applied where it is
+  inconvenient.
 - **Confidence is a blend of two weak signals.** Retrieval coverage and the model's self-report are
   both crude. It is fine as an internal signal; I would not show a percentage to a guest without
   calibrating it against thumbs-down data first.

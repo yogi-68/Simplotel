@@ -7,6 +7,19 @@ leaving the page.
 > **The Banyan Grove** is a fictional 48-room boutique hotel in Bengaluru, invented for this
 > project. All rooms, rates and policies are sample data.
 
+![The guest journey: question, follow-up, availability, refusal](./docs/media/demo.gif)
+
+<table>
+<tr>
+<td width="50%"><img src="./docs/media/grounded-answer-with-source.jpg" alt="An answer with its source chip expanded to show the exact knowledge-base fact"></td>
+<td width="50%"><img src="./docs/media/availability-and-refusal.jpg" alt="Priced room cards with ruled-out rooms explained, and an honest refusal badged Not in our records"></td>
+</tr>
+<tr>
+<td><em>Every factual answer carries the fact that justifies it. Tap to read it.</em></td>
+<td><em>Engine-computed prices, rooms that were ruled out with reasons, and an honest refusal.</em></td>
+</tr>
+</table>
+
 ---
 
 ## Contents
@@ -123,7 +136,7 @@ Run from the repository root.
 |---|---|
 | `npm run dev` | Both apps, with hot reload |
 | `npm run build` | Production build of both |
-| `npm test` | Full suite — 166 tests, offline, no key needed |
+| `npm test` | Full suite — 169 tests, offline, no key needed |
 | `npm run test:e2e` | 7 end-to-end tests against a real HTTP server |
 | `npm run eval` | The 16 evaluation scenarios, with a pass/fail table |
 | `npm run eval -- --live` | The same scenarios against the real model |
@@ -143,7 +156,7 @@ Run from the repository root.
 | `OPENAI_MODEL` | `gpt-4o-mini` | Any chat-completions model with tool calling |
 | `RETRIEVAL_MODE` | `lexical` | `lexical` (top-K) or `full` (entire KB) |
 | `PORT` | `4000` | |
-| `WEB_ORIGIN` | `http://localhost:3000` | Comma-separated CORS allowlist |
+| `WEB_ORIGIN` | `http://localhost:3000,http://127.0.0.1:3000` | Comma-separated CORS allowlist |
 | `AI_TIMEOUT_MS` | `15000` | Per model attempt |
 | `AI_MAX_RETRIES` | `2` | Transient failures only |
 | `RATE_LIMIT_MAX` | `30` | Requests per minute per IP, on `/api/chat` only |
@@ -191,10 +204,14 @@ curl -s -X POST http://localhost:4000/api/chat \
 ## Testing
 
 ```bash
-npm test          # 166 tests: 135 server, 31 web
+npm test          # 169 tests: 138 server, 31 web
 npm run test:e2e  # 7 real-HTTP end-to-end tests
-npm run eval      # 16 evaluation scenarios
+npm run eval      # 16 evaluation scenarios (offline)
 ```
+
+Verified against the real model too: `npm run eval -- --live` scores **16/16** on `gpt-4o-mini`.
+That run is worth reading about in [EVALUATION.md](./EVALUATION.md) — it initially scored 12/16 and
+exposed two genuine product bugs that the offline suite could not have found.
 
 Everything runs offline against the deterministic provider, so results are reproducible and CI
 never calls a paid API. Coverage includes the retriever and its no-context gate, pricing and date

@@ -56,6 +56,15 @@ Worth recording, because it is the honest version of "I used AI to build this":
    a browser, not by any test that existed at the time.
 6. **The composer was `disabled` while sending**, which blurred it and silently dropped the next
    message. Also found in the browser.
+7. **The booking-form path did not call the availability tool.** With dates in the message the model
+   called `check_availability` correctly; with the same dates supplied as structured `context` from
+   the form, `gpt-4o-mini` asked the guest to re-enter dates they had just picked. Caught only by
+   `npm run eval -- --live`, which scored 12/16 while the offline suite was fully green.
+8. **A rejected stay was labelled `fallback`**, which the UI badges *Not in our records* — wrong,
+   since the records are fine and the guest's dates are not. Also caught live.
 
-Numbers 5 and 6 are the useful lesson: the unit and integration suites were green throughout. Only
-driving the real interface found them.
+Numbers 5 and 6 are one lesson: the unit and integration suites were green throughout, and only
+driving the real interface found them. Numbers 7 and 8 are the sharper version of the same lesson —
+a deterministic offline provider proves the *pipeline* works and proves nothing about whether a real
+model behaves. Both are now covered by regression tests that use a stub provider deliberately
+misbehaving the way the live model did.
