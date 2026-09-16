@@ -1,0 +1,351 @@
+{
+  "hotel": {
+    "name": "The Banyan Grove",
+    "tagline": "A 48-room boutique retreat in the heart of Indiranagar",
+    "city": "Bengaluru",
+    "address": "14 Ulsoor Lake Road, Indiranagar, Bengaluru 560038, India",
+    "phone": "+91 80 4567 1200",
+    "email": "stay@banyangrove.example",
+    "checkInTime": "2:00 PM",
+    "checkOutTime": "11:00 AM"
+  },
+  "suggestedQuestions": [
+    "What time is check-in?",
+    "Does the hotel have a swimming pool?",
+    "Which room is suitable for three guests?",
+    "Is breakfast included?",
+    "What is the cancellation policy?",
+    "Do you have rooms available on 12-14 December?"
+  ],
+  "facts": [
+    {
+      "id": "F01",
+      "category": "property",
+      "title": "About the hotel",
+      "text": "The Banyan Grove is a 48-room boutique hotel in Indiranagar, Bengaluru, built around a 90-year-old banyan tree in its central courtyard. It opened in 2016 and is rated four stars.",
+      "tags": ["about", "hotel", "property", "overview", "stars", "rating", "boutique"]
+    },
+    {
+      "id": "F02",
+      "category": "property",
+      "title": "Address",
+      "text": "The hotel address is 14 Ulsoor Lake Road, Indiranagar, Bengaluru 560038, India.",
+      "tags": ["address", "location", "where", "directions", "street"]
+    },
+    {
+      "id": "F03",
+      "category": "property",
+      "title": "Contact details",
+      "text": "You can reach the front desk on +91 80 4567 1200 or email stay@banyangrove.example.",
+      "tags": ["contact", "phone", "email", "call", "reach", "number"]
+    },
+    {
+      "id": "F04",
+      "category": "property",
+      "title": "Languages spoken",
+      "text": "Front desk staff speak English, Hindi, Kannada and Tamil.",
+      "tags": ["language", "english", "hindi", "kannada", "tamil", "speak"]
+    },
+    {
+      "id": "F05",
+      "category": "rooms",
+      "title": "Room categories",
+      "text": "The hotel has four room categories: Garden View Queen, Deluxe King, Executive Twin and the Banyan Suite.",
+      "tags": ["rooms", "categories", "types", "options", "accommodation"]
+    },
+    {
+      "id": "F06",
+      "category": "rooms",
+      "title": "Garden View Queen",
+      "text": "The Garden View Queen is 280 sq ft with one queen bed and a courtyard view. It sleeps a maximum of 2 adults and starts at INR 5,800 per night.",
+      "tags": ["garden", "view", "queen", "room", "two", "2", "couple", "double", "cheapest"]
+    },
+    {
+      "id": "F07",
+      "category": "rooms",
+      "title": "Deluxe King",
+      "text": "The Deluxe King is 340 sq ft with one king bed and a private balcony. It sleeps 2 adults plus 1 child under 12 on existing bedding, and starts at INR 7,400 per night.",
+      "tags": ["deluxe", "king", "room", "balcony", "child", "two", "2"]
+    },
+    {
+      "id": "F08",
+      "category": "rooms",
+      "title": "Executive Twin",
+      "text": "The Executive Twin is 400 sq ft with two double beds and sleeps up to 3 adults. It starts at INR 8,900 per night and is the smallest room that comfortably accommodates three guests.",
+      "tags": ["executive", "twin", "three", "3", "triple", "family", "friends", "room", "beds"]
+    },
+    {
+      "id": "F09",
+      "category": "rooms",
+      "title": "Banyan Suite",
+      "text": "The Banyan Suite is 620 sq ft with a separate living room, a king bed and a sofa bed. It sleeps up to 4 adults and starts at INR 13,500 per night.",
+      "tags": ["banyan", "suite", "four", "4", "family", "living room", "largest", "biggest"]
+    },
+    {
+      "id": "F10",
+      "category": "rooms",
+      "title": "In-room amenities",
+      "text": "Every room has air conditioning, a 43-inch smart TV, complimentary high-speed Wi-Fi, a tea and coffee maker, a mini-fridge, an in-room safe and blackout curtains.",
+      "tags": ["in-room", "amenities", "tv", "fridge", "safe", "kettle", "coffee", "tea", "air conditioning", "ac"]
+    },
+    {
+      "id": "F11",
+      "category": "rooms",
+      "title": "Extra beds",
+      "text": "An extra bed or rollaway costs INR 1,500 per night and can only be added to the Executive Twin and the Banyan Suite.",
+      "tags": ["extra bed", "rollaway", "additional", "cot", "third"]
+    },
+    {
+      "id": "F12",
+      "category": "rooms",
+      "title": "Connecting rooms",
+      "text": "Two pairs of connecting Garden View Queen rooms are available on the second floor, subject to request at the time of booking.",
+      "tags": ["connecting", "adjoining", "interconnecting", "family", "next to"]
+    },
+    {
+      "id": "F13",
+      "category": "amenities",
+      "title": "Swimming pool",
+      "text": "Yes, there is an outdoor rooftop swimming pool. It is open daily from 6:00 AM to 9:00 PM and is complimentary for in-house guests.",
+      "tags": ["pool", "swimming", "swim", "rooftop", "water", "dip"]
+    },
+    {
+      "id": "F14",
+      "category": "amenities",
+      "title": "Pool rules",
+      "text": "Children under 12 must be accompanied by an adult in the pool. There is no lifeguard on duty, and swimwear is required.",
+      "tags": ["pool", "rules", "children", "lifeguard", "safety", "swim"]
+    },
+    {
+      "id": "F15",
+      "category": "amenities",
+      "title": "Fitness centre",
+      "text": "The fitness centre on level 1 is open 24 hours and is free for in-house guests. It has cardio machines, free weights and a stretching area.",
+      "tags": ["gym", "fitness", "workout", "exercise", "weights", "treadmill"]
+    },
+    {
+      "id": "F16",
+      "category": "amenities",
+      "title": "Spa",
+      "text": "Grove Spa is open from 10:00 AM to 8:00 PM and offers Ayurvedic and Swedish therapies. Appointments must be booked in advance.",
+      "tags": ["spa", "massage", "ayurvedic", "therapy", "wellness", "treatment"]
+    },
+    {
+      "id": "F17",
+      "category": "amenities",
+      "title": "Wi-Fi",
+      "text": "Complimentary high-speed Wi-Fi is available throughout the hotel with no device limit and no time restriction.",
+      "tags": ["wifi", "wi-fi", "internet", "network", "online", "connection"]
+    },
+    {
+      "id": "F18",
+      "category": "amenities",
+      "title": "Meeting rooms",
+      "text": "There are two meeting rooms seating 12 and 30 people. They cost INR 4,000 per hour including a projector, screen and whiteboard.",
+      "tags": ["meeting", "conference", "business", "boardroom", "projector", "event", "work"]
+    },
+    {
+      "id": "F19",
+      "category": "amenities",
+      "title": "Parking",
+      "text": "Complimentary valet parking is available with 20 spaces, including two EV charging points.",
+      "tags": ["parking", "car", "valet", "ev", "charging", "vehicle", "park"]
+    },
+    {
+      "id": "F20",
+      "category": "services",
+      "title": "Laundry",
+      "text": "Same-day laundry and dry cleaning is available if items are handed in before 9:00 AM. The service is chargeable and priced per item.",
+      "tags": ["laundry", "dry cleaning", "wash", "ironing", "clothes"]
+    },
+    {
+      "id": "F21",
+      "category": "dining",
+      "title": "Restaurant",
+      "text": "Tamarind is the all-day dining restaurant at the hotel, open from 7:00 AM to 11:00 PM, serving South Indian and Continental cuisine.",
+      "tags": ["restaurant", "dining", "food", "eat", "tamarind", "lunch", "dinner", "cuisine"]
+    },
+    {
+      "id": "F22",
+      "category": "dining",
+      "title": "Breakfast",
+      "text": "Yes, buffet breakfast is included in every room rate. It is served at Tamarind from 7:00 AM to 10:30 AM daily.",
+      "tags": ["breakfast", "included", "buffet", "morning", "complimentary", "free", "meal"]
+    },
+    {
+      "id": "F23",
+      "category": "dining",
+      "title": "Bar",
+      "text": "The Aerial Bar on the rooftop is open from 4:00 PM to 11:30 PM and serves cocktails, Indian craft beer and small plates.",
+      "tags": ["bar", "drinks", "alcohol", "cocktail", "beer", "rooftop", "pub", "wine"]
+    },
+    {
+      "id": "F24",
+      "category": "dining",
+      "title": "Room service",
+      "text": "In-room dining is available from 7:00 AM to 11:00 PM. Room service is not offered overnight.",
+      "tags": ["room service", "in-room dining", "order", "food", "delivery", "night"]
+    },
+    {
+      "id": "F25",
+      "category": "dining",
+      "title": "Dietary requirements",
+      "text": "Vegetarian, vegan, Jain and gluten-free menus are available on request. Please tell the restaurant about nut allergies in advance.",
+      "tags": ["vegetarian", "vegan", "jain", "gluten", "allergy", "diet", "food"]
+    },
+    {
+      "id": "F26",
+      "category": "policies",
+      "title": "Check-in time",
+      "text": "Check-in starts at 2:00 PM.",
+      "tags": ["check-in", "checkin", "arrival", "time", "arrive", "when"]
+    },
+    {
+      "id": "F27",
+      "category": "policies",
+      "title": "Check-out time",
+      "text": "Check-out is at 11:00 AM.",
+      "tags": ["check-out", "checkout", "departure", "time", "leave", "vacate"]
+    },
+    {
+      "id": "F28",
+      "category": "policies",
+      "title": "Early check-in and late check-out",
+      "text": "Early check-in and late check-out are subject to availability. Late check-out until 2:00 PM is complimentary for suite guests; for other rooms it is charged at 50 percent of the nightly rate.",
+      "tags": ["early", "late", "check-in", "check-out", "extend", "stay longer"]
+    },
+    {
+      "id": "F29",
+      "category": "policies",
+      "title": "Cancellation policy",
+      "text": "Cancellation is free up to 48 hours before 2:00 PM on the check-in date. Inside 48 hours, one night of room charge applies. A no-show is charged the first night of the stay in full.",
+      "tags": ["cancellation", "cancel", "refund", "policy", "no-show", "change booking"]
+    },
+    {
+      "id": "F30",
+      "category": "policies",
+      "title": "Peak-season cancellation",
+      "text": "For stays between 20 December and 5 January, cancellations require 7 days notice. Inside 7 days those bookings are non-refundable.",
+      "tags": ["cancellation", "peak", "december", "january", "new year", "christmas", "non-refundable"]
+    },
+    {
+      "id": "F31",
+      "category": "policies",
+      "title": "Payment methods",
+      "text": "The hotel accepts Visa, Mastercard, American Express, UPI and cash up to INR 20,000. A card pre-authorisation is taken at check-in.",
+      "tags": ["payment", "pay", "card", "credit", "upi", "cash", "amex", "visa"]
+    },
+    {
+      "id": "F32",
+      "category": "policies",
+      "title": "Identification required",
+      "text": "A government-issued photo ID is required for every adult at check-in. Foreign nationals must present a passport and a valid visa.",
+      "tags": ["id", "identification", "passport", "visa", "aadhaar", "document", "proof"]
+    },
+    {
+      "id": "F33",
+      "category": "policies",
+      "title": "Children",
+      "text": "Children under 6 stay free on existing bedding. Children aged 6 to 12 are charged INR 1,000 per night, which includes breakfast.",
+      "tags": ["children", "kids", "child", "infant", "baby", "toddler", "family", "age"]
+    },
+    {
+      "id": "F34",
+      "category": "policies",
+      "title": "Pets",
+      "text": "Pets are not permitted at the hotel. Certified service animals are welcome at no extra charge.",
+      "tags": ["pet", "dog", "cat", "animal", "service animal", "allowed"]
+    },
+    {
+      "id": "F35",
+      "category": "policies",
+      "title": "Smoking",
+      "text": "The hotel is entirely non-smoking indoors. A designated smoking terrace is on level 4. Smoking in a room incurs an INR 10,000 deep-cleaning fee.",
+      "tags": ["smoking", "smoke", "cigarette", "vape", "non-smoking", "terrace"]
+    },
+    {
+      "id": "F36",
+      "category": "policies",
+      "title": "Quiet hours",
+      "text": "Quiet hours are from 10:30 PM to 7:00 AM across all floors.",
+      "tags": ["quiet", "noise", "hours", "sleep", "loud", "music"]
+    },
+    {
+      "id": "F37",
+      "category": "policies",
+      "title": "Taxes on room rates",
+      "text": "Room rates are exclusive of GST. GST is charged at 12 percent for rooms up to INR 7,500 per night and 18 percent above that.",
+      "tags": ["tax", "gst", "rate", "price", "charges", "inclusive", "exclusive"]
+    },
+    {
+      "id": "F38",
+      "category": "location",
+      "title": "Airport distance and transfer",
+      "text": "Kempegowda International Airport is about 38 km away, a 60 to 90 minute drive. The hotel does not run a complimentary shuttle, but a paid airport transfer can be arranged from INR 2,200 for a sedan.",
+      "tags": ["airport", "transfer", "shuttle", "taxi", "pickup", "distance", "kempegowda", "blr"]
+    },
+    {
+      "id": "F39",
+      "category": "location",
+      "title": "Metro and public transport",
+      "text": "Indiranagar Metro station on the Purple Line is 900 metres away, about a 12 minute walk.",
+      "tags": ["metro", "train", "transport", "station", "public", "purple line", "walk"]
+    },
+    {
+      "id": "F40",
+      "category": "location",
+      "title": "Nearby attractions",
+      "text": "Ulsoor Lake is 1.5 km away, the 100 Feet Road shopping and restaurant strip is 600 metres away, and UB City is about 6 km away.",
+      "tags": ["nearby", "attractions", "shopping", "sightseeing", "around", "close", "lake", "things to do"]
+    },
+    {
+      "id": "F41",
+      "category": "services",
+      "title": "Front desk and concierge",
+      "text": "The front desk and concierge are staffed 24 hours a day and can arrange taxis, restaurant reservations and local tours.",
+      "tags": ["front desk", "concierge", "reception", "24 hour", "help", "assistance"]
+    },
+    {
+      "id": "F42",
+      "category": "services",
+      "title": "Accessibility",
+      "text": "The hotel has a step-free entrance and lift access to all floors. Two accessible Garden View Queen rooms, 104 and 105, have roll-in showers and grab rails.",
+      "tags": ["accessible", "accessibility", "wheelchair", "disabled", "mobility", "step-free", "lift", "elevator"]
+    },
+    {
+      "id": "F43",
+      "category": "services",
+      "title": "Luggage storage",
+      "text": "Complimentary luggage storage is available both before check-in and after check-out.",
+      "tags": ["luggage", "bags", "storage", "store", "suitcase", "left"]
+    },
+    {
+      "id": "F44",
+      "category": "services",
+      "title": "Doctor on call",
+      "text": "A doctor is on call 24 hours a day. The consultation is chargeable and billed to the room.",
+      "tags": ["doctor", "medical", "sick", "health", "emergency", "hospital", "ill"]
+    },
+    {
+      "id": "F45",
+      "category": "faq",
+      "title": "Group bookings",
+      "text": "Bookings of more than 8 rooms are handled by the sales team. Please email groups@banyangrove.example for a group quotation.",
+      "tags": ["group", "bulk", "wedding", "corporate", "many rooms", "block"]
+    },
+    {
+      "id": "F46",
+      "category": "faq",
+      "title": "Private events",
+      "text": "The rooftop lawn can be hired for private events of up to 60 guests. The events team can be reached through the front desk.",
+      "tags": ["event", "party", "wedding", "celebration", "lawn", "venue", "birthday"]
+    },
+    {
+      "id": "F47",
+      "category": "faq",
+      "title": "Booking modifications",
+      "text": "Dates on an existing booking can be changed once free of charge if the request is made more than 48 hours before check-in and the new dates have availability.",
+      "tags": ["modify", "change", "reschedule", "amend", "booking", "date change"]
+    }
+  ]
+}
