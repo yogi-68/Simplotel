@@ -1,0 +1,228 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens.
+ *
+ * Colour is defined once here and consumed everywhere, so dark mode is a single
+ * block of overrides rather than a conditional class on every element. The
+ * palette is warm and low-contrast-on-the-eyes deliberately: this is a
+ * hospitality surface, not a developer tool.
+ */
+@theme {
+  --color-canvas: #f7f5f2;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f1eeea;
+  --color-border: #e3ddd5;
+  --color-border-strong: #d2c9bd;
+
+  --color-ink: #1c1917;
+  --color-ink-soft: #57534e;
+  --color-ink-faint: #8a8279;
+
+  --color-brand: #1d5c4f;
+  --color-brand-soft: #e6f0ed;
+  --color-brand-ink: #0f3a31;
+
+  --color-accent: #b4763a;
+  --color-accent-soft: #fbf1e6;
+
+  --color-danger: #a4302a;
+  --color-danger-soft: #fceceb;
+  --color-warning: #8a5a12;
+  --color-warning-soft: #fdf4e3;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Georgia', 'Times New Roman', serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-canvas: #14110f;
+    --color-surface: #1e1a17;
+    --color-surface-muted: #262120;
+    --color-border: #332c28;
+    --color-border-strong: #453c36;
+
+    --color-ink: #f5f2ef;
+    --color-ink-soft: #c2b9b1;
+    --color-ink-faint: #8f857c;
+
+    --color-brand: #5fbfa8;
+    --color-brand-soft: #16302b;
+    --color-brand-ink: #a9e0d2;
+
+    --color-accent: #d99b5c;
+    --color-accent-soft: #33261a;
+
+    --color-danger: #f0928c;
+    --color-danger-soft: #3a1f1e;
+    --color-warning: #dfae63;
+    --color-warning-soft: #332711;
+  }
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Visible focus for keyboard users, invisible for pointer users. */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/*
+ * Component classes.
+ *
+ * Extracted with @apply so the JSX reads as structure rather than a wall of
+ * utility strings. The rule of thumb: anything used more than twice, or that
+ * carries a design decision worth naming, lives here.
+ */
+@layer components {
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition;
+    border-color: var(--color-border);
+    background-color: var(--color-surface);
+    color: var(--color-ink-soft);
+  }
+
+  .chip:hover {
+    border-color: var(--color-border-strong);
+    color: var(--color-ink);
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition;
+    @apply disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    background-color: var(--color-brand);
+    color: #ffffff;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-brand-ink);
+  }
+
+  .btn-ghost {
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    border-color: var(--color-border-strong);
+    background-color: var(--color-surface-muted);
+  }
+
+  .card {
+    @apply rounded-2xl border p-4;
+    border-color: var(--color-border);
+    background-color: var(--color-surface);
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide;
+    color: var(--color-ink-faint);
+  }
+
+  .field-input {
+    @apply w-full rounded-xl border px-3 py-2.5 text-sm transition;
+    border-color: var(--color-border);
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+  }
+
+  .field-input:focus {
+    border-color: var(--color-brand);
+    outline: none;
+  }
+
+  /* Native date inputs render an almost invisible picker icon in dark mode. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) .field-input::-webkit-calendar-picker-indicator {
+      filter: invert(0.8);
+    }
+  }
+}
+
+/* The blinking caret that follows the typewriter effect. */
+@keyframes caret {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  50%,
+  95% {
+    opacity: 0;
+  }
+}
+
+.typing-caret::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background-color: currentColor;
+  animation: caret 1.1s step-end infinite;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-rise {
+  animation: rise 0.28s ease-out both;
+}
+
+@keyframes pulse-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.dot {
+  animation: pulse-dot 1.3s ease-in-out infinite;
+}
+
+/*
+ * Anyone who has asked their operating system to stop moving things gets a
+ * static interface. The typewriter is also disabled in JS for the same reason --
+ * hiding motion in CSS alone would still leave text appearing one letter at a
+ * time to a screen reader.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
