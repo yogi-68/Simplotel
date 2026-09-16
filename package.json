@@ -1,0 +1,30 @@
+{
+  "name": "hotel-guest-assistant",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI-powered hotel guest assistant — grounded conversational Q&A + deterministic room availability.",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "dev": "concurrently -n server,web -c cyan,magenta \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:server": "npm run dev --workspace apps/server",
+    "dev:web": "npm run dev --workspace apps/web",
+    "build": "npm run build --workspace apps/server && npm run build --workspace apps/web",
+    "start": "npm run start --workspace apps/server",
+    "test": "npm run test --workspace apps/server && npm run test --workspace apps/web",
+    "test:server": "npm run test --workspace apps/server",
+    "test:web": "npm run test --workspace apps/web",
+    "test:e2e": "npm run test:e2e --workspace apps/server",
+    "eval": "npm run eval --workspace apps/server",
+    "typecheck": "npm run typecheck --workspace apps/server && npm run typecheck --workspace apps/web"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  }
+}
