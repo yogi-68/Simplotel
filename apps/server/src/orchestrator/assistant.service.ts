@@ -93,6 +93,22 @@ export async function handleChat(input: HandleChatInput, deps: AssistantDeps): P
   let output: AssistantOutput | null = null;
   let degraded = false;
   let parseFailed = false;
+  let ruleFailure: { message: string; field: string | null } | null = null;
+
+  // When the request itself carries a complete stay, the guest filled a date
+  // picker and pressed "Check availability". There is no intent left to infer,
+  // so we run the engine ourselves and hand the model the result to narrate
+  // rather than asking it to decide whether to look anything up.
+  //
+  // This is not an optimisation. Live evaluation showed gpt-4o-mini ignoring the
+  // stay details in its prompt and asking the guest to repeat dates they had
+  // just entered -- on the single most important path in the product. Leaving a
+  // deterministic decision to a language model was the bug; taking it back is
+  // the fix, and it makes this path independent of which model is behind it.
+  const preseed = preseedAvailability(input.request.context, { today, requestId: input.requestId });
+  if (preseed) {
+    messages.push(preseed.assistantMessage, preseed.toolMessage);
+  }
 
   try {
     const run = await runModelLoop({
@@ -100,14 +116,18 @@ export async function handleChat(input: HandleChatInput, deps: AssistantDeps): P
       messages,
       signal: input.signal,
       today,
-      slots,
+      slots: preseed?.availability ? mergeSlots(slots, slotsFromToolArguments(preseed.args)) : slots,
       requestId: input.requestId,
+      seededAvailability: preseed?.availability ?? null,
+      seededToolCalls: preseed ? [CHECK_AVAILABILITY_TOOL] : [],
+      seededRuleFailure: preseed?.ruleFailure ?? null,
     });
     output = run.output;
     availability = run.availability;
     slots = run.slots;
     toolCallNames.push(...run.toolCallNames);
     parseFailed = run.parseFailed;
+    ruleFailure = run.ruleFailure;
   } catch (error) {
     // The model is unreachable. We do NOT fail the request -- we answer from
     // the knowledge base directly. A guest asking about check-in time should
@@ -148,7 +168,20 @@ export async function handleChat(input: HandleChatInput, deps: AssistantDeps): P
     logger.warn({ requestId: input.requestId }, 'Model output failed schema validation, served fallback');
   }
 
-  const needs = resolveNeeds(reply, slots);
+  // A rejected stay is a clarification, and the backend already knows that -- so
+  // it does not get left to the model. Live runs showed gpt-4o-mini labelling
+  // "your check-out is before your check-in" as `fallback`, which the UI badges
+  // "Not in our records". That is actively misleading: our records are fine, the
+  // guest's dates are not. The model's wording is kept; only the label is fixed.
+  if (ruleFailure && !degraded && reply.type !== 'clarification') {
+    logger.info(
+      { requestId: input.requestId, was: reply.type, field: ruleFailure.field },
+      'Relabelled reply as clarification after a business-rule failure',
+    );
+    reply = { ...reply, type: 'clarification' };
+  }
+
+  const needs = resolveNeeds(reply, slots, ruleFailure?.field ?? null);
   const confidence = blendConfidence(reply, retrieval.confidence, retrieval.strength, degraded);
 
   const response: ChatResponse = {
@@ -208,6 +241,10 @@ interface ModelLoopInput {
   today: string;
   slots: Slots;
   requestId: string;
+  /** Engine result computed before the model ran, for the structured-form path. */
+  seededAvailability?: AvailabilityResult | null;
+  seededToolCalls?: string[];
+  seededRuleFailure?: { message: string; field: string | null } | null;
 }
 
 interface ModelLoopResult {
@@ -216,12 +253,15 @@ interface ModelLoopResult {
   slots: Slots;
   toolCallNames: string[];
   parseFailed: boolean;
+  /** Set when the engine rejected the stay, so the reply can be labelled correctly. */
+  ruleFailure: { message: string; field: string | null } | null;
 }
 
 async function runModelLoop(input: ModelLoopInput): Promise<ModelLoopResult> {
   const messages = [...input.messages];
-  const toolCallNames: string[] = [];
-  let availability: AvailabilityResult | null = null;
+  const toolCallNames: string[] = [...(input.seededToolCalls ?? [])];
+  let availability: AvailabilityResult | null = input.seededAvailability ?? null;
+  let ruleFailure = input.seededRuleFailure ?? null;
   let slots = input.slots;
 
   for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration += 1) {
@@ -229,7 +269,7 @@ async function runModelLoop(input: ModelLoopInput): Promise<ModelLoopResult> {
 
     if (completion.toolCalls.length === 0) {
       const parsed = parseOutput(completion.content);
-      return { output: parsed.output, availability, slots, toolCallNames, parseFailed: parsed.failed };
+      return { output: parsed.output, availability, slots, toolCallNames, parseFailed: parsed.failed, ruleFailure };
     }
 
     messages.push({ role: 'assistant', content: completion.content ?? '', toolCalls: completion.toolCalls });
@@ -237,6 +277,7 @@ async function runModelLoop(input: ModelLoopInput): Promise<ModelLoopResult> {
     for (const call of completion.toolCalls) {
       toolCallNames.push(call.name);
       const execution = executeTool(call, { today: input.today, requestId: input.requestId });
+      if (execution.ruleFailure) ruleFailure = execution.ruleFailure;
       if (execution.availability) {
         availability = execution.availability;
         // Trust the arguments only once the engine has accepted them.
@@ -263,6 +304,7 @@ async function runModelLoop(input: ModelLoopInput): Promise<ModelLoopResult> {
     slots,
     toolCallNames,
     parseFailed: false,
+    ruleFailure,
   };
 }
 
@@ -270,16 +312,70 @@ async function runModelLoop(input: ModelLoopInput): Promise<ModelLoopResult> {
 // Tool dispatch
 // ---------------------------------------------------------------------------
 
+const PRESEED_TOOL_CALL_ID = 'preflight-availability';
+
+/**
+ * Run `check_availability` up front when the request already carries a complete
+ * stay, and shape the result as a tool exchange the model can narrate.
+ *
+ * Only the booking form sends a complete `context`; a typed message sends none.
+ * So this fires exactly when the guest has expressed their stay through a date
+ * picker, and never hijacks an unrelated question asked while the form happens
+ * to be filled in.
+ *
+ * A stay that breaks a business rule is seeded too, as a tool *error*. The model
+ * then asks the guest to correct it, which is the same path an invalid
+ * model-generated tool call takes -- one behaviour, one place.
+ */
+function preseedAvailability(
+  context: ChatRequest['context'],
+  ctx: { today: string; requestId: string },
+): {
+  assistantMessage: LlmMessage;
+  toolMessage: LlmMessage;
+  availability: AvailabilityResult | null;
+  args: Record<string, unknown>;
+  ruleFailure: { message: string; field: string | null } | null;
+} | null {
+  if (!context?.checkIn || !context.checkOut || context.adults === undefined) return null;
+
+  const args: Record<string, unknown> = {
+    checkIn: context.checkIn,
+    checkOut: context.checkOut,
+    adults: context.adults,
+    children: context.children ?? 0,
+  };
+
+  const execution = executeTool(
+    { id: PRESEED_TOOL_CALL_ID, name: CHECK_AVAILABILITY_TOOL, arguments: args },
+    ctx,
+  );
+
+  return {
+    assistantMessage: {
+      role: 'assistant',
+      content: '',
+      toolCalls: [{ id: PRESEED_TOOL_CALL_ID, name: CHECK_AVAILABILITY_TOOL, arguments: args }],
+    },
+    toolMessage: { role: 'tool', toolCallId: PRESEED_TOOL_CALL_ID, content: JSON.stringify(execution.payload) },
+    availability: execution.availability,
+    args,
+    ruleFailure: execution.ruleFailure,
+  };
+}
+
 interface ToolExecution {
   /** Compact payload handed back to the model for narration. */
   payload: unknown;
   /** Full engine result, attached to the API response for the UI. */
   availability: AvailabilityResult | null;
+  /** Set when a business rule rejected the arguments, with the offending field. */
+  ruleFailure: { message: string; field: string | null } | null;
 }
 
 function executeTool(call: LlmToolCall, ctx: { today: string; requestId: string }): ToolExecution {
   if (call.name !== CHECK_AVAILABILITY_TOOL) {
-    return { payload: { error: `Unknown tool ${call.name}.` }, availability: null };
+    return { payload: { error: `Unknown tool ${call.name}.` }, availability: null, ruleFailure: null };
   }
 
   // Tool arguments come from a language model, so they are untrusted input and
@@ -287,27 +383,28 @@ function executeTool(call: LlmToolCall, ctx: { today: string; requestId: string 
   const parsed = AvailabilityQuerySchema.safeParse(call.arguments);
   if (!parsed.success) {
     const first = parsed.error.issues[0];
-    return {
-      payload: {
-        error: `Those stay details are not usable: ${first?.message ?? 'invalid arguments'}.`,
-        field: first?.path.join('.') ?? null,
-      },
-      availability: null,
-    };
+    const field = first?.path.join('.') ?? null;
+    const message = `Those stay details are not usable: ${first?.message ?? 'invalid arguments'}.`;
+    return { payload: { error: message, field }, availability: null, ruleFailure: { message, field } };
   }
 
   try {
     const result = checkAvailability(parsed.data, { today: ctx.today });
-    return { payload: compactForModel(result), availability: result };
+    return { payload: compactForModel(result), availability: result, ruleFailure: null };
   } catch (error) {
     if (isAppError(error) && error.code === 'VALIDATION_ERROR') {
       // A broken business rule (past date, checkout before checkin) is not a
       // server error -- it is information the guest needs. Hand it back to the
       // model so it can ask for a correction in its own words.
-      return { payload: { error: error.message, field: error.details?.[0]?.path ?? null }, availability: null };
+      const field = error.details?.[0]?.path ?? null;
+      return {
+        payload: { error: error.message, field },
+        availability: null,
+        ruleFailure: { message: error.message, field },
+      };
     }
     logger.error({ requestId: ctx.requestId, err: String(error) }, 'Availability tool failed');
-    return { payload: { error: 'Availability could not be checked right now.' }, availability: null };
+    return { payload: { error: 'Availability could not be checked right now.' }, availability: null, ruleFailure: null };
   }
 }
 
@@ -443,8 +540,17 @@ function retrieveForTurn(
  * `needs` drives the inline booking form, so it must reflect what is actually
  * missing -- not merely what the model remembered to ask for.
  */
-function resolveNeeds(output: AssistantOutput, slots: Slots): SlotName[] {
+const SLOT_NAMES: SlotName[] = ['checkIn', 'checkOut', 'adults'];
+
+function resolveNeeds(output: AssistantOutput, slots: Slots, failedField: string | null): SlotName[] {
   if (output.type !== 'clarification') return [];
+
+  // A field the engine rejected is "needed" even though it has a value -- the
+  // guest supplied a date, it is just not a usable one, and the form should
+  // point at exactly that input.
+  const rejected = SLOT_NAMES.find((name) => name === failedField);
+  if (rejected) return [rejected];
+
   const actuallyMissing = missingSlots(slots);
   if (actuallyMissing.length === 0) return [];
   // Intersect so we never ask for something we already know, but fall back to

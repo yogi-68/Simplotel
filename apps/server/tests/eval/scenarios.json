@@ -86,7 +86,7 @@
       "id": "S07",
       "category": "Invalid input",
       "title": "Check-out before check-in",
-      "why": "A broken business rule must become a question the guest can fix. The chat endpoint validates date shape only; ordering is a conversational correction, while POST /api/availability rejects it outright with a 400.",
+      "why": "A broken business rule must become a question the guest can fix. The chat endpoint validates date shape only; ordering is a conversational correction, while POST /api/availability rejects it outright with a 400. The assertion checks the reply is about check-out and quotes no price -- deliberately NOT that it reproduces the engine message verbatim, since a good model rephrases it and names the actual date.",
       "turns": [
         {
           "message": "Can I book from the 20th to the 18th?",
@@ -96,7 +96,7 @@
       "expect": {
         "type": ["clarification"],
         "hasAvailability": false,
-        "mustContain": ["at least one night after check-in"],
+        "mustContain": ["check-out"],
         "mustNotMatch": "\\b(INR|₹)\\s?[0-9]"
       }
     },

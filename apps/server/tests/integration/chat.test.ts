@@ -177,6 +177,51 @@ describe('POST /api/chat - availability', () => {
     expect(second.body.availability.query.adults).toBe(3);
   });
 
+  it('checks availability without asking the model to decide, when the form supplied a stay', async () => {
+    // The guest used a date picker and pressed "Check availability", so there is
+    // no intent left to infer. Live evaluation caught gpt-4o-mini ignoring the
+    // stay details in its prompt and asking the guest to repeat dates they had
+    // just entered, so the engine now runs before the model does.
+    //
+    // The stub never emits a tool call, which is exactly the misbehaviour being
+    // guarded against: availability must still be computed and returned.
+    const provider = stubProvider([{ answer: 'Here are your options.', type: 'availability', sourceIds: [] }]);
+    const res = await request(createApp({ provider }))
+      .post('/api/chat')
+      .send({ message: 'Anything free?', context: { checkIn, checkOut, adults: 2 } })
+      .expect(200);
+
+    expect(res.body.meta.toolCalls).toContain('check_availability');
+    expect(res.body.availability).not.toBeNull();
+    expect(res.body.availability.query).toMatchObject({ checkIn, checkOut, adults: 2 });
+  });
+
+  it('does not run availability for an ordinary question with no stay supplied', async () => {
+    const res = await request(app()).post('/api/chat').send({ message: 'What time is check-in?' }).expect(200);
+    expect(res.body.meta.toolCalls).toEqual([]);
+    expect(res.body.availability).toBeNull();
+  });
+
+  it('labels a rejected stay as a clarification even when the model calls it something else', async () => {
+    // gpt-4o-mini labelled "your check-out is before your check-in" as
+    // `fallback`, which the UI badges "Not in our records" -- misleading, since
+    // our records are fine and the guest's dates are not. The backend knows a
+    // business rule failed, so it fixes the label and keeps the model's wording.
+    const provider = stubProvider([
+      { answer: 'Your check-out date is before your check-in date.', type: 'fallback', sourceIds: [] },
+    ]);
+    const res = await request(createApp({ provider }))
+      .post('/api/chat')
+      .send({ message: 'Book me in', context: { checkIn, checkOut: checkIn, adults: 2 } })
+      .expect(200);
+
+    expect(res.body.reply.type).toBe('clarification');
+    expect(res.body.reply.text).toContain('check-out');
+    expect(res.body.availability).toBeNull();
+    // The form should point at the field the engine actually rejected.
+    expect(res.body.needs).toEqual(['checkOut']);
+  });
+
   it('turns a broken date rule into a question rather than an error', async () => {
     // The model asks for a stay that ends before it starts. The engine rejects
     // it, and that rejection is handed back as something the guest can fix.
