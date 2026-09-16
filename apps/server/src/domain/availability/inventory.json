@@ -1,0 +1,85 @@
+{
+  "currency": "INR",
+  "roomTypes": [
+    {
+      "id": "garden-view-queen",
+      "name": "Garden View Queen",
+      "description": "A calm 280 sq ft room overlooking the banyan courtyard, with one queen bed.",
+      "bedding": "1 queen bed",
+      "sizeSqft": 280,
+      "maxAdults": 2,
+      "maxOccupancy": 2,
+      "baseRate": 5800,
+      "totalRooms": 20,
+      "amenities": ["Courtyard view", "Smart TV", "Tea and coffee maker", "In-room safe", "Free Wi-Fi"]
+    },
+    {
+      "id": "deluxe-king",
+      "name": "Deluxe King",
+      "description": "A 340 sq ft room with a king bed and a private balcony above the courtyard.",
+      "bedding": "1 king bed",
+      "sizeSqft": 340,
+      "maxAdults": 2,
+      "maxOccupancy": 3,
+      "baseRate": 7400,
+      "totalRooms": 16,
+      "amenities": ["Private balcony", "Smart TV", "Mini-fridge", "Bathtub", "Free Wi-Fi"]
+    },
+    {
+      "id": "executive-twin",
+      "name": "Executive Twin",
+      "description": "A 400 sq ft room with two double beds, built for three adults travelling together.",
+      "bedding": "2 double beds",
+      "sizeSqft": 400,
+      "maxAdults": 3,
+      "maxOccupancy": 4,
+      "baseRate": 8900,
+      "totalRooms": 8,
+      "amenities": ["Two double beds", "Work desk", "Smart TV", "Mini-fridge", "Free Wi-Fi"]
+    },
+    {
+      "id": "banyan-suite",
+      "name": "Banyan Suite",
+      "description": "A 620 sq ft suite with a separate living room, a king bed and a sofa bed.",
+      "bedding": "1 king bed + 1 sofa bed",
+      "sizeSqft": 620,
+      "maxAdults": 4,
+      "maxOccupancy": 5,
+      "baseRate": 13500,
+      "totalRooms": 4,
+      "amenities": ["Separate living room", "Rooftop pool access", "Espresso machine", "Bathtub", "Free Wi-Fi"]
+    }
+  ],
+  "pricingRules": {
+    "weekendUpliftPct": 15,
+    "weekendDays": [5, 6],
+    "seasons": [
+      {
+        "id": "peak",
+        "label": "Peak season",
+        "multiplier": 1.5,
+        "minNights": 2,
+        "ranges": [{ "from": "12-20", "to": "01-05" }]
+      },
+      {
+        "id": "monsoon",
+        "label": "Monsoon saver",
+        "multiplier": 0.85,
+        "minNights": 1,
+        "ranges": [{ "from": "07-01", "to": "09-30" }]
+      }
+    ],
+    "gstTiers": [
+      { "upToNightlyRate": 7500, "ratePct": 12 },
+      { "upToNightlyRate": null, "ratePct": 18 }
+    ]
+  },
+  "policies": {
+    "standardCancellation": "Free cancellation until 48 hours before 2:00 PM on the check-in date.",
+    "peakCancellation": "Peak-season stays (20 Dec - 5 Jan) require 7 days notice and are non-refundable inside that window.",
+    "maxNights": 30,
+    "maxAdults": 8,
+    "maxChildren": 6,
+    "bookingHorizonDays": 540
+  }
+}
