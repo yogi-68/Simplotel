@@ -1,0 +1,32 @@
+# Render blueprint for the API service.
+#
+# The web app deploys separately to Vercel; see docs/DEPLOYMENT.md. Keeping them
+# apart means the frontend gets a CDN and the backend gets a long-lived Node
+# process, which is what each one actually wants.
+services:
+  - type: web
+    name: hotel-assistant-api
+    runtime: node
+    plan: free
+    region: singapore
+    # Build from the repo root so npm workspaces can resolve @hotel/contracts.
+    buildCommand: npm ci && npm run build --workspace apps/server
+    startCommand: node apps/server/dist/index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AI_PROVIDER
+        value: mock # change to `openai` once the key below is set
+      - key: OPENAI_API_KEY
+        sync: false # set in the Render dashboard; never committed
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: RETRIEVAL_MODE
+        value: lexical
+      - key: LOG_LEVEL
+        value: info
+      - key: WEB_ORIGIN
+        sync: false # e.g. https://your-app.vercel.app
+      - key: RATE_LIMIT_MAX
+        value: 30
