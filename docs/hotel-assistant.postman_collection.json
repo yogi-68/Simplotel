@@ -1,0 +1,393 @@
+{
+  "info": {
+    "name": "The Banyan Grove - Guest Assistant API",
+    "description": "AI hotel guest assistant. Set the `baseUrl` variable (default http://localhost:4000).\n\nThe chat requests capture `sessionId` from the first response into a collection variable, so the follow-up requests continue the same conversation automatically. Run them in order.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000", "type": "string" },
+    { "key": "sessionId", "value": "", "type": "string" },
+    { "key": "checkIn", "value": "", "type": "string" },
+    { "key": "checkOut", "value": "", "type": "string" }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Keep the sample stay in the future so the collection never goes stale.",
+          "const day = 86400000;",
+          "const iso = (offset) => new Date(Date.now() + offset * day).toISOString().slice(0, 10);",
+          "pm.collectionVariables.set('checkIn', iso(30));",
+          "pm.collectionVariables.set('checkOut', iso(32));"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Liveness",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/health", "host": ["{{baseUrl}}"], "path": ["api", "health"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('is up', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('up');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Readiness",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/ready",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "ready"]
+            },
+            "description": "Also asserts the knowledge base and inventory loaded, so a bad deploy fails the check rather than serving an assistant that knows nothing."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('knowledge base loaded', () => {",
+                  "  pm.expect(pm.response.json().checks.knowledgeBaseFacts).to.be.above(0);",
+                  "});",
+                  "pm.test('never exposes the API key', () => {",
+                  "  pm.expect(pm.response.text()).to.not.include('sk-');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Hotel bootstrap",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/hotel", "host": ["{{baseUrl}}"], "path": ["api", "hotel"] },
+        "description": "Name, room types and suggested questions for the UI. The frontend hardcodes none of this."
+      }
+    },
+    {
+      "name": "Chat",
+      "item": [
+        {
+          "name": "1. Factual question (grounded)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"message\": \"What time is check-in?\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/chat", "host": ["{{baseUrl}}"], "path": ["api", "chat"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('sessionId', body.sessionId);",
+                  "pm.test('answers from the knowledge base', () => {",
+                  "  pm.expect(body.reply.type).to.eql('answer');",
+                  "  pm.expect(body.reply.text).to.include('2:00 PM');",
+                  "});",
+                  "pm.test('cites its source', () => {",
+                  "  pm.expect(body.sources.map(s => s.id)).to.include('F26');",
+                  "  pm.expect(body.meta.grounded).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Follow-up (uses conversation memory)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"and checkout?\",\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/chat", "host": ["{{baseUrl}}"], "path": ["api", "chat"] },
+            "description": "Meaningless without the previous turn. Run request 1 first."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('resolves from context', () => {",
+                  "  pm.expect(pm.response.json().reply.text).to.include('11:00 AM');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Honest refusal (out of scope)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"message\": \"What time does the casino open?\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/chat", "host": ["{{baseUrl}}"], "path": ["api", "chat"] },
+            "description": "There is no casino. The assistant must refuse rather than invent opening hours."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('refuses without inventing a time', () => {",
+                  "  pm.expect(body.reply.type).to.eql('fallback');",
+                  "  pm.expect(body.sources).to.be.empty;",
+                  "  pm.expect(body.reply.text).to.not.match(/\\d{1,2}[:.]\\d{2}\\s*(am|pm)/i);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Missing information (asks, does not guess)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"message\": \"Do you have rooms available?\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/chat", "host": ["{{baseUrl}}"], "path": ["api", "chat"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('asks for the missing stay details', () => {",
+                  "  pm.expect(body.reply.type).to.eql('clarification');",
+                  "  pm.expect(body.needs).to.include.members(['checkIn', 'checkOut', 'adults']);",
+                  "  pm.expect(body.availability).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Availability via tool call",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Do you have any rooms available?\",\n  \"context\": {\n    \"checkIn\": \"{{checkIn}}\",\n    \"checkOut\": \"{{checkOut}}\",\n    \"adults\": 3\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/chat", "host": ["{{baseUrl}}"], "path": ["api", "chat"] },
+            "description": "`context` is what the booking form sends. It outranks anything extracted from language."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('calls the availability tool', () => {",
+                  "  pm.expect(body.meta.toolCalls).to.include('check_availability');",
+                  "  pm.expect(body.availability).to.not.be.null;",
+                  "});",
+                  "pm.test('every room offered fits the party', () => {",
+                  "  body.availability.options.forEach(o => pm.expect(o.maxAdults).to.be.at.least(3));",
+                  "});",
+                  "pm.test('totals add up', () => {",
+                  "  body.availability.options.forEach(o => pm.expect(o.total).to.eql(o.subtotal + o.taxes));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Validation error (empty message)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"message\": \"\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/chat", "host": ["{{baseUrl}}"], "path": ["api", "chat"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 with field-level detail', () => {",
+                  "  pm.response.to.have.status(400);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.error.code).to.eql('VALIDATION_ERROR');",
+                  "  pm.expect(body.error.details[0].path).to.eql('message');",
+                  "  pm.expect(body.error.retryable).to.be.false;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Availability (deterministic, no model)",
+      "item": [
+        {
+          "name": "Check availability",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"checkIn\": \"{{checkIn}}\",\n  \"checkOut\": \"{{checkOut}}\",\n  \"adults\": 3,\n  \"children\": 0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/availability",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "availability"]
+            },
+            "description": "What the booking form posts. No LLM is involved, and the same query always returns the same result."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const a = pm.response.json().availability;",
+                  "pm.test('prices are internally consistent', () => {",
+                  "  a.options.forEach(o => {",
+                  "    pm.expect(o.subtotal).to.eql(o.nightly.reduce((s, n) => s + n.rate, 0));",
+                  "    pm.expect(o.total).to.eql(o.subtotal + o.taxes);",
+                  "  });",
+                  "});",
+                  "pm.test('explains what was ruled out', () => {",
+                  "  pm.expect(a.excluded.length).to.be.above(0);",
+                  "  a.excluded.forEach(e => pm.expect(e.explanation).to.be.a('string').and.not.empty);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rejected: check-out before check-in",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"checkIn\": \"{{checkOut}}\",\n  \"checkOut\": \"{{checkIn}}\",\n  \"adults\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/availability",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "availability"]
+            },
+            "description": "The form endpoint rejects a broken business rule. The same input on /api/chat becomes a clarifying question instead."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 with a guest-readable reason', () => {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().error.message).to.include('at least one night');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rejected: stay in the past",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"checkIn\": \"2020-01-01\",\n  \"checkOut\": \"2020-01-03\",\n  \"adults\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/availability",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "availability"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rejects a past arrival', () => {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().error.message).to.match(/past/i);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Unknown route (404 contract)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/nope", "host": ["{{baseUrl}}"], "path": ["api", "nope"] },
+        "description": "Returns the JSON error contract rather than an Express HTML page."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('json error contract', () => {",
+              "  pm.response.to.have.status(404);",
+              "  pm.expect(pm.response.json().error.code).to.eql('NOT_FOUND');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
