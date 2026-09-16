@@ -32,3 +32,6 @@ Thumbs.db
 
 # deploy
 .vercel
+
+# next.js generates this on build
+next-env.d.ts
