@@ -31,7 +31,6 @@ leaving the page.
 | [PRODUCT_NOTES.md](./PRODUCT_NOTES.md) | Product, UX, AI and engineering decisions — the written answers |
 | [EVALUATION.md](./EVALUATION.md) | 16 evaluation scenarios and observed results |
 | [docs/api-examples.md](./docs/api-examples.md) | curl for every endpoint, including failures |
-| [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) | Deploying to Vercel + Render |
 | [AI_TOOLS.md](./AI_TOOLS.md) | AI tools used while building this |
 
 ---

@@ -1,6 +1,6 @@
 # Render blueprint for the API service.
 #
-# The web app deploys separately to Vercel; see docs/DEPLOYMENT.md. Keeping them
+# The web app deploys separately to Vercel (see vercel.json). Keeping them
 # apart means the frontend gets a CDN and the backend gets a long-lived Node
 # process, which is what each one actually wants.
 services:
