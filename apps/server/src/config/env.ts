@@ -28,7 +28,9 @@ const EnvSchema = z
       .transform((v) =>
         v
           .split(',')
-          .map((s) => s.trim())
+          // Browsers send Origin without a trailing slash, so a pasted
+          // "https://app.vercel.app/" would otherwise never match.
+          .map((s) => s.trim().replace(/\/+$/, ''))
           .filter(Boolean),
       ),
 

@@ -80,6 +80,11 @@ describe('GET /api/hotel', () => {
 });
 
 describe('health checks', () => {
+  it('answers on the bare root URL', async () => {
+    const res = await request(app()).get('/').expect(200);
+    expect(res.body.health).toBe('/api/health');
+  });
+
   it('reports liveness', async () => {
     const res = await request(app()).get('/api/health').expect(200);
     expect(res.body.status).toBe('up');
@@ -97,6 +102,26 @@ describe('health checks', () => {
     const res = await request(app()).get('/api/health/ready').expect(200);
     expect(JSON.stringify(res.body)).not.toMatch(/sk-/);
     expect(res.body.config).not.toHaveProperty('OPENAI_API_KEY');
+  });
+});
+
+describe('CORS', () => {
+  const original = process.env.WEB_ORIGIN;
+  afterAll(() => {
+    if (original === undefined) delete process.env.WEB_ORIGIN;
+    else process.env.WEB_ORIGIN = original;
+    resetEnvCache();
+  });
+
+  it('accepts an allowlisted origin configured with a trailing slash', async () => {
+    process.env.WEB_ORIGIN = 'https://guest.example.com/';
+    resetEnvCache();
+    const res = await request(app())
+      .options('/api/chat')
+      .set('Origin', 'https://guest.example.com')
+      .set('Access-Control-Request-Method', 'POST')
+      .expect(204);
+    expect(res.headers['access-control-allow-origin']).toBe('https://guest.example.com');
   });
 });
 

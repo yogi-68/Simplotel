@@ -47,6 +47,11 @@ export function createApp(options: AppOptions = {}): Express {
   app.use(express.json({ limit: '100kb' }));
   app.use(requestId);
 
+  // Platforms and curious visitors hit the bare URL; point them at the API.
+  app.get('/', (_req, res) => {
+    res.json({ ok: true, service: 'hotel-assistant-api', health: '/api/health' });
+  });
+
   app.use('/api', healthRouter());
   app.use('/api', hotelRouter());
   app.use('/api', availabilityRouter());
