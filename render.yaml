@@ -1,6 +1,7 @@
 # Render blueprint for the API service.
 #
-# The web app deploys separately to Vercel (see vercel.json). Keeping them
+# The web app deploys separately to Vercel (see apps/web/vercel.json, with the
+# Vercel project Root Directory set to apps/web). Keeping them
 # apart means the frontend gets a CDN and the backend gets a long-lived Node
 # process, which is what each one actually wants.
 services:
@@ -10,7 +11,8 @@ services:
     plan: free
     region: singapore
     # Build from the repo root so npm workspaces can resolve @hotel/contracts.
-    buildCommand: npm ci && npm run build --workspace apps/server
+    # --include=dev: NODE_ENV=production would otherwise skip tsup.
+    buildCommand: npm ci --include=dev && npm run build --workspace apps/server
     startCommand: node apps/server/dist/index.js
     healthCheckPath: /api/health
     envVars:
